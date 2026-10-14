@@ -1,0 +1,25 @@
+const express = require('express');
+const router = express.Router();
+const {
+  getAllActivity,
+  addActivity,
+  getTodayActivity,
+  getStudentActivity,
+  getPlatformActivity,
+  getActivitySummary,
+  getDailyRoster
+} = require('../controllers/activityController');
+
+// Specific endpoints
+router.get('/today', getTodayActivity);
+router.get('/daily-roster', getDailyRoster);
+router.get('/summary', getActivitySummary);
+router.get('/platform/:platform', getPlatformActivity);
+router.get('/student/:studentId', getStudentActivity);
+
+// Root endpoints
+router.route('/')
+  .get(getAllActivity)
+  .post(addActivity);
+
+module.exports = router;

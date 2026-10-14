@@ -1,0 +1,29 @@
+{
+  "name": "student360-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Student360 – Learning Activity & Performance Analytics",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seed/seedData.js"
+  },
+  "keywords": [
+    "student360",
+    "express",
+    "mongodb",
+    "analytics"
+  ],
+  "author": "Student360 Team",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^2.28.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
