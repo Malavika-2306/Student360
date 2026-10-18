@@ -202,6 +202,32 @@ async function runTests() {
     assert(actSumRes.data.data?.realCount !== undefined, 'Activity summary contains realCount');
     assert(actSumRes.data.data?.sampleCount !== undefined, 'Activity summary contains sampleCount');
 
+    // 11. Test Inactivity Alert Dispatch & Audit Log
+    console.log('\n11. Testing Faculty Inactivity Alert Dispatch & Audit Log...');
+    const alertSendRes = await request({
+      hostname: 'localhost',
+      port: 5000,
+      path: '/api/activity/alerts/send',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }, {
+      studentId,
+      date: '2026-10-18',
+      message: 'Integration test alert message'
+    });
+    assert(alertSendRes.statusCode === 200, 'POST /api/activity/alerts/send returned 200');
+    assert(alertSendRes.data?.success === true, 'Alert dispatch marked as success');
+    assert(Array.isArray(alertSendRes.data?.dispatched) && alertSendRes.data.dispatched.length > 0, 'Dispatched array returned');
+
+    const alertHistRes = await request({
+      hostname: 'localhost',
+      port: 5000,
+      path: '/api/activity/alerts/history',
+      method: 'GET'
+    });
+    assert(alertHistRes.statusCode === 200, 'GET /api/activity/alerts/history returned 200');
+    assert(Array.isArray(alertHistRes.data?.data) && alertHistRes.data.data.length > 0, 'Alert history contains logged alerts');
+
     console.log(`\n======================================================`);
     console.log(`Suite Results: ${passed} Passed, ${failed} Failed`);
     console.log(`======================================================\n`);

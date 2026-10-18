@@ -6,7 +6,8 @@ import {
   getActivitySummary, 
   getWeeklyAnalytics, 
   getAnalyticsDashboard,
-  getDailyActivityRoster
+  getDailyActivityRoster,
+  sendInactivityAlert
 } from '../services/api';
 
 /**
@@ -26,7 +27,7 @@ const getTodayDateString = () => {
   }
 };
 
-export default function Activity({ activities: propActivities }) {
+export default function Activity({ activities: propActivities, onTriggerToast }) {
   const [timeframe, setTimeframe] = useState('This Week');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -61,6 +62,7 @@ export default function Activity({ activities: propActivities }) {
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterTab, setRosterTab] = useState('active'); // 'active' | 'inactive'
   const [alertSentMap, setAlertSentMap] = useState({});
+  const [alertSending, setAlertSending] = useState({});
 
   const fetchRoster = useCallback(async (targetDate) => {
     setRosterLoading(true);
@@ -80,8 +82,51 @@ export default function Activity({ activities: propActivities }) {
     fetchRoster(rosterDate);
   }, [rosterDate, fetchRoster]);
 
-  const handleSendInactivityAlert = (studentId) => {
-    setAlertSentMap(prev => ({ ...prev, [studentId]: true }));
+  const handleSendInactivityAlert = async (studentId) => {
+    try {
+      setAlertSending(prev => ({ ...prev, [studentId]: true }));
+      const res = await sendInactivityAlert({
+        studentId,
+        date: rosterDate
+      });
+      setAlertSentMap(prev => ({ ...prev, [studentId]: true }));
+      if (onTriggerToast) {
+        onTriggerToast(res.message || 'Inactivity alert recorded and dispatched!');
+      }
+    } catch (err) {
+      console.error('Failed to send alert:', err);
+      if (onTriggerToast) {
+        onTriggerToast(`Failed to dispatch alert: ${err.message}`);
+      }
+    } finally {
+      setAlertSending(prev => ({ ...prev, [studentId]: false }));
+    }
+  };
+
+  const handleSendAlertToAllInactive = async () => {
+    const inactives = rosterData?.inactiveStudents || [];
+    if (inactives.length === 0) return;
+    const studentIds = inactives.map(s => s.studentId);
+    try {
+      setAlertSending(prev => ({ ...prev, all: true }));
+      const res = await sendInactivityAlert({
+        studentIds,
+        date: rosterDate
+      });
+      const newMap = { ...alertSentMap };
+      studentIds.forEach(id => { newMap[id] = true; });
+      setAlertSentMap(newMap);
+      if (onTriggerToast) {
+        onTriggerToast(res.message || `Dispatched alerts to ${studentIds.length} inactive students!`);
+      }
+    } catch (err) {
+      console.error('Failed to send alerts to all:', err);
+      if (onTriggerToast) {
+        onTriggerToast(`Failed to dispatch alerts: ${err.message}`);
+      }
+    } finally {
+      setAlertSending(prev => ({ ...prev, all: false }));
+    }
   };
 
   const fetchActivityData = async () => {
@@ -496,56 +541,79 @@ export default function Activity({ activities: propActivities }) {
         {rosterTab === 'inactive' && (
           <div>
             {(rosterData?.inactiveStudents && rosterData.inactiveStudents.length > 0) ? (
-              <div className="table-responsive">
-                <table className="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Student Name</th>
-                      <th>Roll Number</th>
-                      <th>Department & Year</th>
-                      <th>Email Address</th>
-                      <th>Last Recorded Active</th>
-                      <th className="text-right">Faculty Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rosterData.inactiveStudents.map((stu) => (
-                      <tr key={stu.studentId}>
-                        <td className="font-semibold text-dark">
-                          {stu.name}
-                        </td>
-                        <td className="font-mono text-muted">{stu.rollNo}</td>
-                        <td>
-                          <span className="department-tag">{stu.department}</span>
-                          <span className="badge-tag tag-indigo ml-2">Yr {stu.year || 3}</span>
-                        </td>
-                        <td className="text-muted">{stu.email}</td>
-                        <td className="text-sm">
-                          <span className="status-badge badge-inactive">
-                            <span className="badge-dot"></span>
-                            {stu.lastActive}
-                          </span>
-                        </td>
-                        <td className="text-right">
-                          {alertSentMap[stu.studentId] ? (
-                            <span className="text-success font-semibold text-xs" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <CheckCircleIcon size={14} />
-                              Alert Dispatched
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="btn btn-outline-danger btn-xs"
-                              onClick={() => handleSendInactivityAlert(stu.studentId)}
-                            >
-                              Send Inactivity Alert
-                            </button>
-                          )}
-                        </td>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                  <p className="text-sm text-secondary">
+                    Students with zero recorded activity on <strong>{rosterDate}</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-xs"
+                    onClick={handleSendAlertToAllInactive}
+                    disabled={alertSending.all}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <AlertCircleIcon size={14} />
+                    <span>
+                      {alertSending.all 
+                        ? 'Dispatching Alerts...' 
+                        : `Dispatch Alert to All (${rosterData.inactiveStudents.length})`}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="table-responsive">
+                  <table className="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Student Name</th>
+                        <th>Roll Number</th>
+                        <th>Department & Year</th>
+                        <th>Email Address</th>
+                        <th>Last Recorded Active</th>
+                        <th className="text-right">Faculty Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rosterData.inactiveStudents.map((stu) => (
+                        <tr key={stu.studentId}>
+                          <td className="font-semibold text-dark">
+                            {stu.name}
+                          </td>
+                          <td className="font-mono text-muted">{stu.rollNo}</td>
+                          <td>
+                            <span className="department-tag">{stu.department}</span>
+                            <span className="badge-tag tag-indigo ml-2">Yr {stu.year || 3}</span>
+                          </td>
+                          <td className="text-muted">{stu.email}</td>
+                          <td className="text-sm">
+                            <span className="status-badge badge-inactive">
+                              <span className="badge-dot"></span>
+                              {stu.lastActive}
+                            </span>
+                          </td>
+                          <td className="text-right">
+                            {alertSentMap[stu.studentId] ? (
+                              <span className="text-success font-semibold text-xs" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <CheckCircleIcon size={14} />
+                                Alert Dispatched
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn btn-outline-danger btn-xs"
+                                onClick={() => handleSendInactivityAlert(stu.studentId)}
+                                disabled={alertSending[stu.studentId]}
+                              >
+                                {alertSending[stu.studentId] ? 'Sending...' : 'Send Inactivity Alert'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="roster-empty-notice">

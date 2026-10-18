@@ -7,8 +7,14 @@ const {
   getStudentActivity,
   getPlatformActivity,
   getActivitySummary,
-  getDailyRoster
+  getDailyRoster,
+  sendInactivityAlert,
+  getAlertHistory
 } = require('../controllers/activityController');
+
+// Alerts endpoints
+router.post('/alerts/send', sendInactivityAlert);
+router.get('/alerts/history', getAlertHistory);
 
 // Specific endpoints
 router.get('/today', getTodayActivity);

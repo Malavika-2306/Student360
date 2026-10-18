@@ -1,6 +1,7 @@
 const Activity = require('../models/Activity');
 const Student = require('../models/Student');
 const PollResponse = require('../models/PollResponse');
+const NotificationLog = require('../models/NotificationLog');
 
 /**
  * @desc    Get all activity records
@@ -304,4 +305,93 @@ exports.getDailyRoster = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Dispatch inactivity reminder alerts to student(s)
+ * @route   POST /api/activity/alerts/send
+ */
+exports.sendInactivityAlert = async (req, res, next) => {
+  try {
+    const { studentId, studentIds, date, message: customMessage } = req.body;
+    let targetIds = [];
+
+    if (Array.isArray(studentIds) && studentIds.length > 0) {
+      targetIds = studentIds;
+    } else if (studentId) {
+      targetIds = [studentId];
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one studentId or studentIds array is required.'
+      });
+    }
+
+    const students = await Student.find({ _id: { $in: targetIds } });
+    if (!students || students.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No matching students found in database.'
+      });
+    }
+
+    const dateTarget = date ? new Date(date) : new Date();
+    const createdLogs = [];
+
+    for (const stu of students) {
+      const alertMsg = customMessage || `Faculty reminder: Zero learning activity was recorded for ${stu.name} on ${dateTarget.toLocaleDateString()}. Please complete your daily problem on LeetCode/CodeChef or commit to your GitHub repository.`;
+      
+      const log = await NotificationLog.create({
+        studentId: stu._id,
+        studentName: stu.name,
+        studentEmail: stu.email || `${stu.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@college.edu`,
+        alertType: 'inactivity_warning',
+        targetDate: dateTarget,
+        message: alertMsg,
+        channel: 'Email & Student Portal',
+        status: 'delivered',
+        sentAt: new Date()
+      });
+
+      createdLogs.push({
+        logId: log._id,
+        studentId: stu._id,
+        name: stu.name,
+        email: log.studentEmail,
+        sentAt: log.sentAt
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Inactivity alert dispatched successfully to ${createdLogs.length} student(s).`,
+      count: createdLogs.length,
+      dispatched: createdLogs
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get history of dispatched student notifications
+ * @route   GET /api/activity/alerts/history
+ */
+exports.getAlertHistory = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const logs = await NotificationLog.find()
+      .populate('studentId', 'name department rollNo')
+      .sort({ sentAt: -1 })
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      data: logs
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 

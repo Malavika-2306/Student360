@@ -137,6 +137,7 @@ export default function App() {
         return (
           <Activity 
             activities={activities} 
+            onTriggerToast={showToast}
           />
         );
       case 'reports':

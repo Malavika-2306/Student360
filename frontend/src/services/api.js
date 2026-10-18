@@ -96,6 +96,10 @@ export const getPlatformActivity = (platform) =>
   apiRequest(`/activity/platform/${encodeURIComponent(platform)}`);
 export const getStudentActivity = (studentId) => 
   apiRequest(`/activity/student/${studentId}`);
+export const sendInactivityAlert = (payload) => 
+  apiRequest('/activity/alerts/send', { method: 'POST', body: payload });
+export const getAlertHistory = (limit = 20) => 
+  apiRequest(`/activity/alerts/history?limit=${limit}`);
 
 // -------------------------------------------------------------
 // Reports API

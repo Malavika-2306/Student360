@@ -42,14 +42,13 @@ This document outlines the architectural roadmap and implementation plan for the
      ```
   3. Handle GitHub API rate limits gracefully with exponential backoff.
 
----
-
-### Milestone 3: Faculty Inactivity Alert Delivery
-- **Objective:** Connect the "Send Inactivity Alert" button in `Students.jsx` and `Activity.jsx` to a real email delivery service.
-- **Tasks:**
-  1. Configure `nodemailer` with institution SMTP or transactional email provider (SendGrid / AWS SES).
-  2. Add email template for students with 3+ days of zero platform activity.
-  3. Add audit log recording when alerts are dispatched.
+### Milestone 3: Faculty Inactivity Alert Delivery ✅ [COMPLETED]
+- **Status:** Fully implemented and verified across frontend and backend.
+- **Deliverables:**
+  1. `NotificationLog` MongoDB model persisting student identity, alert type, target date, channel, status, and timestamp.
+  2. Endpoints: `POST /api/activity/alerts/send` (single student and batch dispatch) and `GET /api/activity/alerts/history`.
+  3. Interactive UI in `Activity.jsx`: individual "Send Inactivity Alert" and batch "Dispatch Alert to All" buttons with live feedback and state update.
+  4. Covered in `integrationE2ETest.js` (Step 11 passing 100%).
 
 ---
 

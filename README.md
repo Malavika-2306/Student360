@@ -51,14 +51,20 @@ Student360 is a full-stack academic monitoring and learning analytics platform d
    - Vote options with percentage bar visualizations.
    - Faculty can track responders vs. non-responders with dedicated student modals and reminder dispatch.
 
-6. **Periodic Reports & RFC 4180 CSV Export (`/reports`)**
+6. **Periodic Reports & Multi-Format Export (`/reports`)**
    - Daily, Weekly, and Monthly aggregated reports.
    - Departmental engagement comparison tables.
    - **Real Browser CSV Export:** Generates and downloads full spreadsheet reports with executive summary, departmental matrix, and student cohort rosters via client-side Blob generation.
+   - **Native Print & PDF Mode:** Built-in `@media print` stylesheet that strips navigation and controls, rendering high-contrast academic accreditation binders via the "Print / Save PDF" trigger.
 
 7. **Platform & Department Analytics (`/analytics`)**
    - Platform adoption metrics across LeetCode, CodeChef, and GitHub.
    - Automated actionable insights highlighting high-performing and at-risk student cohorts.
+
+8. **Faculty Inactivity Alert System & Audit Trail (`/activity`)**
+   - Single-student and batch alert dispatch (`POST /api/activity/alerts/send`).
+   - MongoDB-backed persistent audit trail (`NotificationLog`) recording student identity, alert type, target date, message, channel, and dispatch timestamp (`GET /api/activity/alerts/history`).
+   - One-click "Dispatch Alert to All" batch action for disengaged cohorts.
 
 ---
 

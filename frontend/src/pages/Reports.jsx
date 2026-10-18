@@ -293,6 +293,17 @@ export default function Reports({ students: propStudents, onTriggerToast }) {
             <RefreshIcon size={16} className={loading ? "spin" : ""} />
             <span>{loading ? "Refreshing..." : "Refresh"}</span>
           </button>
+
+          <button 
+            type="button" 
+            className="btn btn-outline"
+            onClick={() => window.print()}
+            title="Print report or save as PDF document"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <DownloadIcon size={15} />
+            <span>Print / Save PDF</span>
+          </button>
         </div>
       </div>
 
