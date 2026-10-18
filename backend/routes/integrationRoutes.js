@@ -9,11 +9,15 @@ const {
   connectLeetCode,
   connectCodeChef,
   manualSync,
-  disconnect
+  disconnect,
+  syncAllPlatforms
 } = require('../controllers/integrationController');
 
 // Capability matrix
 router.get('/platforms/capabilities', getCapabilities);
+
+// Multi-account batch sync trigger
+router.post('/sync-all', syncAllPlatforms);
 
 // OAuth Web Callback
 router.get('/github/callback', handleGitHubCallback);

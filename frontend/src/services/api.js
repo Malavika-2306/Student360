@@ -134,6 +134,8 @@ export const connectCodeChef = (studentId, handle) =>
   apiRequest(`/integrations/${studentId}/codechef`, { method: 'POST', body: { handle } });
 export const syncPlatform = (studentId, platform) => 
   apiRequest(`/integrations/${studentId}/${platform}/sync`, { method: 'POST' });
+export const syncAllPlatforms = () => 
+  apiRequest('/integrations/sync-all', { method: 'POST' });
 export const disconnectPlatform = (studentId, platform) => 
   apiRequest(`/integrations/${studentId}/${platform}/disconnect`, { method: 'POST' });
 export const getPlatformCapabilities = () => 

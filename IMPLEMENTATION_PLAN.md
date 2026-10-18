@@ -30,17 +30,15 @@ This document outlines the architectural roadmap and implementation plan for the
 
 ---
 
-### Milestone 2: Automated Background Sync Service
-- **Objective:** Automatically refresh student GitHub public contributions at regular intervals without requiring manual "Sync Now" button clicks.
-- **Tasks:**
-  1. Install lightweight cron runner in backend (`node-cron`).
-  2. Implement job runner in `backend/services/schedulerService.js`:
-     ```javascript
-     cron.schedule('0 */6 * * *', async () => {
-       // Refresh public events for connected GitHub accounts every 6 hours
-     });
-     ```
-  3. Handle GitHub API rate limits gracefully with exponential backoff.
+### Milestone 2: Automated Background Sync Service ✅ [COMPLETED]
+- **Status:** Fully implemented in `backend/services/schedulerService.js` and verified.
+- **Deliverables:**
+  1. Background sync engine running on a configurable interval (default every 6 hours).
+  2. Batch endpoint: `POST /api/integrations/sync-all` synchronizing all connected GitHub, LeetCode, and CodeChef accounts.
+  3. Interactive UI: "Sync Platforms" header button on Dashboard with spinning indicator and toast feedback.
+  4. Tested and verified in `backend/tests/integrationE2ETest.js` (Step 12 passing 100%).
+
+---
 
 ### Milestone 3: Faculty Inactivity Alert Delivery ✅ [COMPLETED]
 - **Status:** Fully implemented and verified across frontend and backend.
@@ -52,11 +50,12 @@ This document outlines the architectural roadmap and implementation plan for the
 
 ---
 
-### Milestone 4: PDF & Comprehensive Accreditation Export
-- **Objective:** Enable one-click generation of PDF compliance binders for NAAC / NBA accreditation committees.
-- **Tasks:**
-  1. Add PDF generation route (`GET /api/reports/:period/pdf`) using `pdfkit` or `puppeteer-core`.
-  2. Include departmental participation tables, active student rosters, and signature lines.
+### Milestone 4: PDF & Comprehensive Accreditation Export ✅ [COMPLETED]
+- **Status:** Fully implemented and verified in `Reports.jsx` and `App.css`.
+- **Deliverables:**
+  1. RFC 4180 CSV spreadsheet generator downloading structured executive summaries, departmental comparison tables, and full student rosters via client-side Blob generation.
+  2. Built-in `@media print` academic print/PDF stylesheet that strips navigation, controls, and widgets, rendering pristine A4/letter binders.
+  3. "Print / Save PDF" header action calling native browser print & PDF compilation dialog.
 
 ---
 

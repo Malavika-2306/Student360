@@ -337,3 +337,23 @@ exports.disconnect = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Trigger multi-account platform synchronization across all students
+ * @route   POST /api/integrations/sync-all
+ */
+exports.syncAllPlatforms = async (req, res, next) => {
+  try {
+    const schedulerService = require('../services/schedulerService');
+    const results = await schedulerService.syncAllConnectedAccounts();
+
+    res.status(200).json({
+      success: true,
+      message: `Multi-platform synchronization finished: ${results.githubSynced} GitHub, ${results.leetcodeSynced} LeetCode, ${results.codechefSynced} CodeChef.`,
+      data: results
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

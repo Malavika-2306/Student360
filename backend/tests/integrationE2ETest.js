@@ -228,6 +228,18 @@ async function runTests() {
     assert(alertHistRes.statusCode === 200, 'GET /api/activity/alerts/history returned 200');
     assert(Array.isArray(alertHistRes.data?.data) && alertHistRes.data.data.length > 0, 'Alert history contains logged alerts');
 
+    // 12. Test System-Wide Multi-Account Platform Sync
+    console.log('\n12. Testing System-Wide Multi-Account Platform Sync...');
+    const syncAllRes = await request({
+      hostname: 'localhost',
+      port: 5000,
+      path: '/api/integrations/sync-all',
+      method: 'POST'
+    });
+    assert(syncAllRes.statusCode === 200, 'POST /api/integrations/sync-all returned 200');
+    assert(syncAllRes.data?.success === true, 'Sync all marked as success');
+    assert(syncAllRes.data?.data?.totalChecked !== undefined, 'Sync all returns totalChecked count');
+
     console.log(`\n======================================================`);
     console.log(`Suite Results: ${passed} Passed, ${failed} Failed`);
     console.log(`======================================================\n`);

@@ -8,7 +8,7 @@ import {
   AlertCircleIcon,
   RefreshIcon
 } from '../components/Icons';
-import { getDashboard } from '../services/api';
+import { getDashboard, syncAllPlatforms } from '../services/api';
 
 /**
  * Format timestamp into human-readable relative time
@@ -37,12 +37,13 @@ function formatActivityTime(timeStr) {
  * Dashboard Page
  * Real-time student activity overview connected to GET /api/dashboard.
  */
-export default function Dashboard({ students = [], polls = [], activities = [], onNavigate }) {
+export default function Dashboard({ students = [], polls = [], activities = [], onNavigate, onTriggerToast }) {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncingAll, setSyncingAll] = useState(false);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -56,11 +57,29 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleSyncAll = async () => {
+    try {
+      setSyncingAll(true);
+      const res = await syncAllPlatforms();
+      await fetchDashboardData();
+      if (onTriggerToast) {
+        onTriggerToast(res.message || 'Multi-platform synchronization finished!');
+      }
+    } catch (err) {
+      console.error('Failed to sync all platforms:', err);
+      if (onTriggerToast) {
+        onTriggerToast(`Sync failed: ${err.message}`);
+      }
+    } finally {
+      setSyncingAll(false);
+    }
   };
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   // Compute stats from live API with sensible defaults
   const totalStudents = dashboardData?.students?.total !== undefined
@@ -146,6 +165,18 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
           >
             <RefreshIcon size={16} className={loading ? "spin" : ""} />
             <span>{loading ? "Refreshing..." : "Refresh"}</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="btn btn-outline"
+            onClick={handleSyncAll}
+            disabled={syncingAll}
+            title="Synchronize connected GitHub, LeetCode, and CodeChef accounts across all students"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <RefreshIcon size={14} className={syncingAll ? 'spin' : ''} />
+            <span>{syncingAll ? 'Syncing...' : 'Sync Platforms'}</span>
           </button>
 
           <button 

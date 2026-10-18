@@ -113,6 +113,7 @@ export default function App() {
             polls={polls} 
             activities={activities} 
             onNavigate={handleNavigate}
+            onTriggerToast={showToast}
           />
         );
       case 'students':

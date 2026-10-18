@@ -66,6 +66,11 @@ Student360 is a full-stack academic monitoring and learning analytics platform d
    - MongoDB-backed persistent audit trail (`NotificationLog`) recording student identity, alert type, target date, message, channel, and dispatch timestamp (`GET /api/activity/alerts/history`).
    - One-click "Dispatch Alert to All" batch action for disengaged cohorts.
 
+9. **Automated Background Sync Engine & Multi-Account Scheduler**
+   - Background interval scheduler (`schedulerService.js`) automatically updating connected student accounts every 6 hours without blocking server traffic.
+   - On-demand batch endpoint (`POST /api/integrations/sync-all`) and "Sync Platforms" header button on Dashboard.
+   - Synchronizes public repositories, events, and solves with automatic rate-limit backoff and duplicate prevention.
+
 ---
 
 ### ⚠️ Partially Completed / Audited Features
