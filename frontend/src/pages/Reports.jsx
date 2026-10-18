@@ -5,7 +5,8 @@ import {
   getDailyReport, 
   getWeeklyReport, 
   getMonthlyReport, 
-  getDepartmentAnalytics 
+  getDepartmentAnalytics,
+  getStudents
 } from '../services/api';
 
 /**
@@ -17,10 +18,11 @@ import {
  * - GET /api/reports/monthly
  * - GET /api/analytics/departments
  */
-export default function Reports({ onTriggerToast }) {
+export default function Reports({ students: propStudents, onTriggerToast }) {
   const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   const [reportsData, setReportsData] = useState({
     daily: null,
@@ -29,8 +31,9 @@ export default function Reports({ onTriggerToast }) {
   });
 
   const [departments, setDepartments] = useState([]);
+  const [localStudents, setLocalStudents] = useState(propStudents || []);
 
-  const fetchReportsData = async () => {
+  const fetchReportsData = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -50,17 +53,29 @@ export default function Reports({ onTriggerToast }) {
       if (deptRes && deptRes.data && Array.isArray(deptRes.data)) {
         setDepartments(deptRes.data);
       }
+
+      if (!propStudents || propStudents.length === 0) {
+        getStudents().then((sRes) => {
+          if (sRes?.data) setLocalStudents(sRes.data);
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error('Failed to load reports:', err);
       setError(err.message || 'Could not fetch live report metrics from server');
     } finally {
       setLoading(false);
     }
-  };
+  }, [propStudents]);
+
+  useEffect(() => {
+    if (propStudents && propStudents.length > 0) {
+      setLocalStudents(propStudents);
+    }
+  }, [propStudents]);
 
   useEffect(() => {
     fetchReportsData();
-  }, []);
+  }, [fetchReportsData]);
 
   const d = reportsData.daily;
   const w = reportsData.weekly;
@@ -140,9 +155,121 @@ export default function Reports({ onTriggerToast }) {
     ];
   }, [d, w, m, totalStudents]);
 
-  const handleDownload = (reportName) => {
-    if (onTriggerToast) {
-      onTriggerToast(`Downloading "${reportName}" as CSV/PDF spreadsheet...`);
+  const handleDownload = (reportTitle, cardData = null) => {
+    try {
+      setDownloading(true);
+      const isDaily = (reportTitle || '').toLowerCase().includes('daily');
+      const isWeekly = (reportTitle || '').toLowerCase().includes('weekly');
+
+      const matchedCard = cardData || reportCards.find(c => (c.title || '').toLowerCase() === (reportTitle || '').toLowerCase());
+
+      const stats = matchedCard?.stats || {
+        active: isDaily ? (d?.activeStudents ?? 0) : isWeekly ? (w?.activeStudents ?? 0) : (m?.activeStudents ?? 0),
+        inactive: isDaily ? (d?.inactiveStudents ?? 0) : isWeekly ? (w?.inactiveStudents ?? 0) : (m?.inactiveStudents ?? 0),
+        rate: isDaily ? `${d?.participationPercentage ?? 0}%` : `${totalStudents > 0 ? Math.round(((isWeekly ? (w?.activeStudents ?? 0) : (m?.activeStudents ?? 0)) / totalStudents) * 100) : 0}%`
+      };
+
+      const period = matchedCard?.period || (isDaily ? 'Last 24 Hours' : isWeekly ? 'Past 7 Days' : 'Past 30 Days');
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const safeTitle = (reportTitle || 'Activity_Report').replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `Student360_${safeTitle}_${dateStr}.csv`;
+
+      const rows = [];
+
+      // Section 1: Executive Report Metadata
+      rows.push(['Student360 - Learning Activity & Performance Analytics']);
+      rows.push(['Official Academic Activity & Compliance Report']);
+      rows.push(['Report Type', reportTitle || 'Activity Report']);
+      rows.push(['Reporting Period', period]);
+      rows.push(['Date Generated', now.toLocaleString()]);
+      rows.push(['Total Students Tracked', totalStudents]);
+      rows.push(['Active Students in Period', stats.active]);
+      rows.push(['Inactive Students', stats.inactive]);
+      rows.push(['Participation Benchmark', stats.rate]);
+      rows.push([]);
+
+      // Section 2: Department Performance Matrix
+      rows.push(['Departmental Performance Matrix']);
+      rows.push(['Department', 'Total Students', 'Active Students', 'Inactive Students', 'Participation Rate (%)']);
+      if (departments && departments.length > 0) {
+        departments.forEach((dept) => {
+          rows.push([
+            dept.department,
+            dept.totalStudents,
+            dept.active,
+            dept.inactive,
+            `${dept.participationRate}%`
+          ]);
+        });
+      } else {
+        rows.push(['CSE', totalStudents, stats.active, stats.inactive, stats.rate]);
+      }
+      rows.push([]);
+
+      // Section 3: Student Roster & Tracking Details
+      const studentsList = (localStudents && localStudents.length > 0) ? localStudents : (propStudents || []);
+      if (studentsList && studentsList.length > 0) {
+        rows.push(['Student Cohort Roster & Verification Status']);
+        rows.push([
+          'Roll No',
+          'Student Name',
+          'Department',
+          'Year',
+          'Status Today',
+          'Current Streak (Days)',
+          'GitHub Active',
+          'LeetCode Active',
+          'CodeChef Active'
+        ]);
+        studentsList.forEach((s) => {
+          rows.push([
+            s.rollNo || 'N/A',
+            s.name || 'Student',
+            s.department || 'CSE',
+            s.year || 3,
+            s.activeToday ? 'Active' : 'Inactive',
+            s.streak !== undefined ? s.streak : (s.activeToday ? 3 : 0),
+            (s.platforms?.github || s.github) ? 'Yes' : 'No',
+            (s.platforms?.leetcode || s.leetcode) ? 'Yes' : 'No',
+            (s.platforms?.codechef || s.codechef) ? 'Yes' : 'No'
+          ]);
+        });
+      }
+
+      // Convert rows to valid RFC 4180 CSV
+      const processCell = (cell) => {
+        if (cell === null || cell === undefined) return '""';
+        let str = String(cell);
+        if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+          str = `"${str.replace(/"/g, '""')}"`;
+        } else {
+          str = `"${str}"`;
+        }
+        return str;
+      };
+
+      const csvContent = '\uFEFF' + rows.map(r => r.map(processCell).join(',')).join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (onTriggerToast) {
+        onTriggerToast(`Downloaded "${filename}" as CSV spreadsheet!`);
+      }
+    } catch (err) {
+      console.error('Failed to generate CSV download:', err);
+      if (onTriggerToast) {
+        onTriggerToast(`Download failed: ${err.message}`);
+      }
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -236,10 +363,11 @@ export default function Reports({ onTriggerToast }) {
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
-                onClick={() => handleDownload(card.title)}
+                onClick={() => handleDownload(card.title, card)}
+                disabled={downloading}
               >
                 <DownloadIcon size={14} />
-                <span>Download Report</span>
+                <span>{downloading ? 'Preparing...' : 'Download Report'}</span>
               </button>
             </div>
           </div>
@@ -316,7 +444,7 @@ export default function Reports({ onTriggerToast }) {
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => {
-                if (selectedReport) handleDownload(selectedReport.title);
+                if (selectedReport) handleDownload(selectedReport.title, selectedReport);
                 setSelectedReport(null);
               }}
             >

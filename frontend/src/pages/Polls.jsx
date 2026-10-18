@@ -52,7 +52,7 @@ export default function Polls({ polls: propPolls, setPolls: setPropPolls, studen
   const [createError, setCreateError] = useState(null);
 
   // Fetch real polls from MongoDB
-  const fetchPollsList = async () => {
+  const fetchPollsList = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -89,11 +89,11 @@ export default function Polls({ polls: propPolls, setPolls: setPropPolls, studen
     } finally {
       setLoading(false);
     }
-  };
+  }, [setPropPolls]);
 
   useEffect(() => {
     fetchPollsList();
-  }, []);
+  }, [fetchPollsList]);
 
   // Filter polls
   const filteredPolls = polls.filter((p) => {

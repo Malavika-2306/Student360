@@ -25,34 +25,36 @@ Student360 is a full-stack academic monitoring and learning analytics platform d
    - Today's Platform Activity breakdown with verified GitHub integration counter.
    - Survey turnout visualization using pure CSS conic gradient donuts.
    - Real-time recent student learning activity feed with explicit **Real** vs. **Sample** data source badges.
+   - Global header search with instant keyboard navigation (press Enter to filter students directory).
 
-2. **Student Directory & CRUD Management (`/students`)**
+2. **Student Directory & Full CRUD Management (`/students`)**
    - Full CRUD operations connected to MongoDB (`GET`, `POST`, `PUT`, `DELETE /api/students`).
-   - Search by name, roll number, or email.
+   - Search by name, roll number, or email with immediate filter updates.
    - Department filters (CSE, AI&DS, ECE, EEE, MECH, IT, CIVIL) and Active Today toggles.
    - Detailed Student Profile modal displaying platform connections, streaks, and account linking controls.
 
 3. **Authorized GitHub Platform Integration**
-   - Secure student-level authorization using Personal Access Tokens (PAT) with `read:user` scope.
+   - Secure student-level authorization using Personal Access Tokens (PAT) with least-privilege `read:user` scope.
    - Official GitHub REST API integration pulling public repositories, public push events, and commit counts.
-   - **Zero Client Token Exposure:** Schema field `accessToken` uses `{ select: false }`; tokens are stored on the backend and are never returned in React API responses.
+   - **Zero Client Token Exposure:** Schema field `accessToken` uses `{ select: false }`; tokens are stored securely on the backend and never exposed in browser API payloads.
    - **Deduplication:** MongoDB compound unique index `{ studentId: 1, externalId: 1 }` (`gh-event-<event-id>`) prevents duplicate activity entries during repeated synchronizations.
-   - One-click credential wiping via **Disconnect**.
+   - One-click credential wiping via **Disconnect Account**.
 
-4. **Date-Filtered Daily Student Roster (`GET /api/activity/daily-roster?date=YYYY-MM-DD`)**
-   - Queries active learners who completed tasks on any specific calendar date.
-   - Identifies inactive students with zero recorded activity on that date.
-   - Computes daily participation rate and platform distribution.
+4. **Interactive Daily Attendance & Activity Roster (`/activity`)**
+   - Interactive calendar picker allowing date selection with quick preset shortcuts (*Today*, *Oct 9 Benchmark*, *Oct 8*).
+   - High-level metric summary chips: Total Students, Active Learners count & percentage, Inactive Learners count, and platform solve counts.
+   - **Active Learners Roster Table:** Displays student identity, department, specific task breakdown, and **Real** vs **Sample** tags.
+   - **Inactive Learners Roster Table:** Details disengaged students with zero platform activity on the chosen date, complete with an interactive "Send Inactivity Alert" notification trigger.
 
 5. **Surveys & Polls System (`/polls`)**
    - Real-time survey responses linked to students (`/api/polls`).
    - Vote options with percentage bar visualizations.
-   - Faculty can track responders vs. non-responders.
+   - Faculty can track responders vs. non-responders with dedicated student modals and reminder dispatch.
 
-6. **Periodic Reports & Accreditation Data (`/reports`)**
+6. **Periodic Reports & RFC 4180 CSV Export (`/reports`)**
    - Daily, Weekly, and Monthly aggregated reports.
    - Departmental engagement comparison tables.
-   - Report download spreadsheet (.CSV) triggers.
+   - **Real Browser CSV Export:** Generates and downloads full spreadsheet reports with executive summary, departmental matrix, and student cohort rosters via client-side Blob generation.
 
 7. **Platform & Department Analytics (`/analytics`)**
    - Platform adoption metrics across LeetCode, CodeChef, and GitHub.

@@ -22,7 +22,12 @@ import PlatformIntegrations from '../components/PlatformIntegrations';
  * Students Page
  * Monitor individual student activity across LeetCode, CodeChef, and GitHub with live API integration.
  */
-export default function Students({ students: propStudents, setStudents: setPropStudents, onTriggerToast }) {
+export default function Students({ 
+  students: propStudents, 
+  setStudents: setPropStudents, 
+  initialSearch = '', 
+  onTriggerToast 
+}) {
   const [students, setStudents] = useState(propStudents || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,9 +37,15 @@ export default function Students({ students: propStudents, setStudents: setPropS
   const [actionError, setActionError] = useState(null);
 
   // Search and filter states
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch || '');
   const [selectedDept, setSelectedDept] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
+
+  useEffect(() => {
+    if (initialSearch !== undefined && initialSearch !== null) {
+      setSearchTerm(initialSearch);
+    }
+  }, [initialSearch]);
 
   // Modal states
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -68,7 +79,7 @@ export default function Students({ students: propStudents, setStudents: setPropS
   });
 
   // Fetch students from backend API
-  const fetchStudentsList = async () => {
+  const fetchStudentsList = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -105,12 +116,12 @@ export default function Students({ students: propStudents, setStudents: setPropS
     } finally {
       setLoading(false);
     }
-  };
+  }, [setPropStudents]);
 
   // Load students on mount
   useEffect(() => {
     fetchStudentsList();
-  }, []);
+  }, [fetchStudentsList]);
 
   // Filter students based on search, department, and status
   const filteredStudents = students.filter((s) => {

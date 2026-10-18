@@ -120,6 +120,7 @@ export default function App() {
           <Students 
             students={students} 
             setStudents={setStudents} 
+            initialSearch={globalSearch}
             onTriggerToast={showToast}
           />
         );
@@ -141,6 +142,7 @@ export default function App() {
       case 'reports':
         return (
           <Reports 
+            students={students}
             onTriggerToast={showToast} 
           />
         );

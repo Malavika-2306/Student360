@@ -49,6 +49,11 @@ export default function Header({ activePage, onToggleMobileMenu, globalSearch, s
           placeholder="Search students, polls, platforms..."
           value={globalSearch || ''}
           onChange={(e) => setGlobalSearch && setGlobalSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && onQuickNavigate) {
+              onQuickNavigate('students');
+            }
+          }}
         />
         {globalSearch && (
           <button 

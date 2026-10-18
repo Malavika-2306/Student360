@@ -18,14 +18,15 @@ This document outlines the architectural roadmap and implementation plan for the
 
 ## 2. Remaining Work & Technical Milestones
 
-### Milestone 1: Daily Activity Roster UI Component
-- **Objective:** Add an interactive calendar date selector in `frontend/src/pages/Activity.jsx` to visualize the `/api/activity/daily-roster` data directly in the browser.
-- **Tasks:**
-  1. Add date-picker control with "Today", "Yesterday", and custom date input.
-  2. Implement dual-tab view:
-     - **Tab 1: Active Learners ({count})** — Lists student names, department, and specific completed tasks with **Real** vs. **Sample** badges.
-     - **Tab 2: Inactive Students ({count})** — Lists students with zero recorded activity on that date with an "Alert" trigger button.
-  3. Provide empty state feedback for holidays/weekends.
+### Milestone 1: Daily Activity Roster UI Component ✅ [COMPLETED]
+- **Status:** Fully implemented and verified in `frontend/src/pages/Activity.jsx`.
+- **Deliverables:**
+  1. Interactive date-picker with shortcuts (*Today*, *Oct 9 Benchmark*, *Oct 8*).
+  2. Live summary chips displaying total, active, and inactive student counts.
+  3. Dual-tab roster view:
+     - **Active Learners:** Student details, department, solved task breakdown, and **Real** vs **Sample** badges.
+     - **Inactive Learners:** Clear table of disengaged learners with "Send Inactivity Alert" trigger button.
+  4. Zero lint errors and passed all daily roster E2E tests (`backend/tests/dailyRosterTest.js`).
 
 ---
 
