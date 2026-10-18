@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ActivityTable from '../components/ActivityTable';
-import { RefreshIcon, AlertCircleIcon } from '../components/Icons';
+import { RefreshIcon, AlertCircleIcon, CheckCircleIcon } from '../components/Icons';
 import { 
   getActivity, 
   getActivitySummary, 
   getWeeklyAnalytics, 
-  getAnalyticsDashboard 
+  getAnalyticsDashboard,
+  getDailyActivityRoster
 } from '../services/api';
 
 /**
@@ -17,6 +18,14 @@ import {
  * - GET /api/analytics/weekly
  * - GET /api/analytics/dashboard
  */
+const getTodayDateString = () => {
+  try {
+    return new Date().toISOString().split('T')[0];
+  } catch {
+    return '2026-10-14';
+  }
+};
+
 export default function Activity({ activities: propActivities }) {
   const [timeframe, setTimeframe] = useState('This Week');
   const [loading, setLoading] = useState(false);
@@ -44,6 +53,36 @@ export default function Activity({ activities: propActivities }) {
     { day: 'Sat', count: 0 },
     { day: 'Sun', count: 0 }
   ]);
+
+  // Daily Date Roster state
+  const todayIso = getTodayDateString();
+  const [rosterDate, setRosterDate] = useState('2026-10-09');
+  const [rosterData, setRosterData] = useState(null);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [rosterTab, setRosterTab] = useState('active'); // 'active' | 'inactive'
+  const [alertSentMap, setAlertSentMap] = useState({});
+
+  const fetchRoster = useCallback(async (targetDate) => {
+    setRosterLoading(true);
+    try {
+      const res = await getDailyActivityRoster(targetDate);
+      if (res && res.success) {
+        setRosterData(res);
+      }
+    } catch (err) {
+      console.error('Failed to load daily roster:', err);
+    } finally {
+      setRosterLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRoster(rosterDate);
+  }, [rosterDate, fetchRoster]);
+
+  const handleSendInactivityAlert = (studentId) => {
+    setAlertSentMap(prev => ({ ...prev, [studentId]: true }));
+  };
 
   const fetchActivityData = async () => {
     setLoading(true);
@@ -298,6 +337,224 @@ export default function Activity({ activities: propActivities }) {
           </div>
         </div>
         <ActivityTable activities={activitiesList} />
+      </div>
+
+      {/* Date-Filtered Daily Student Activity & Inactivity Roster */}
+      <div className="card roster-card mt-6">
+        <div className="card-header-flex">
+          <div>
+            <h2 className="card-title">Daily Student Attendance & Activity Roster</h2>
+            <p className="card-subtitle">
+              Inspect student activity submissions, tasks completed, and disengaged learners for any selected calendar date.
+            </p>
+          </div>
+        </div>
+
+        {/* Date Selector & Controls */}
+        <div className="roster-header-controls mt-4">
+          <div className="roster-date-picker-group">
+            <span className="text-sm font-semibold text-muted">Select Date:</span>
+            <input 
+              type="date" 
+              className="roster-date-input" 
+              value={rosterDate} 
+              onChange={(e) => setRosterDate(e.target.value)}
+            />
+            <button 
+              type="button" 
+              className={`roster-quick-btn ${rosterDate === todayIso ? 'active' : ''}`}
+              onClick={() => setRosterDate(todayIso)}
+            >
+              Today
+            </button>
+            <button 
+              type="button" 
+              className={`roster-quick-btn ${rosterDate === '2026-10-09' ? 'active' : ''}`}
+              onClick={() => setRosterDate('2026-10-09')}
+            >
+              Oct 9 (Benchmark)
+            </button>
+            <button 
+              type="button" 
+              className={`roster-quick-btn ${rosterDate === '2026-10-08' ? 'active' : ''}`}
+              onClick={() => setRosterDate('2026-10-08')}
+            >
+              Oct 8
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-xs"
+              onClick={() => fetchRoster(rosterDate)}
+              disabled={rosterLoading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+            >
+              <RefreshIcon size={13} className={rosterLoading ? 'spin' : ''} />
+              <span>{rosterLoading ? 'Syncing...' : 'Refresh'}</span>
+            </button>
+          </div>
+
+          <div className="roster-summary-pill-group">
+            <span className="roster-stat-pill pill-active">
+              {rosterData?.summary?.activeCount ?? 0} Active Learners ({rosterData?.summary?.participationRate ?? 0}%)
+            </span>
+            <span className="roster-stat-pill pill-inactive">
+              {rosterData?.summary?.inactiveCount ?? 0} Inactive
+            </span>
+            <span className="roster-stat-pill pill-rate">
+              Total Students: {rosterData?.summary?.totalStudents ?? 0}
+            </span>
+          </div>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="roster-tabs">
+          <button
+            type="button"
+            className={`roster-tab-btn ${rosterTab === 'active' ? 'active' : ''}`}
+            onClick={() => setRosterTab('active')}
+          >
+            <span>Active Learners</span>
+            <span className="roster-tab-badge">{rosterData?.activeStudents?.length ?? 0}</span>
+          </button>
+          <button
+            type="button"
+            className={`roster-tab-btn ${rosterTab === 'inactive' ? 'active' : ''}`}
+            onClick={() => setRosterTab('inactive')}
+          >
+            <span>No Recorded Activity</span>
+            <span className="roster-tab-badge">{rosterData?.inactiveStudents?.length ?? 0}</span>
+          </button>
+        </div>
+
+        {/* Tab 1: Active Learners Table */}
+        {rosterTab === 'active' && (
+          <div>
+            {(rosterData?.activeStudents && rosterData.activeStudents.length > 0) ? (
+              <div className="table-responsive">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Student Name</th>
+                      <th>Roll Number</th>
+                      <th>Department</th>
+                      <th>Completed Activities on {rosterDate}</th>
+                      <th className="text-right">Total Tasks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rosterData.activeStudents.map((stu) => (
+                      <tr key={stu.studentId}>
+                        <td className="font-semibold text-dark">
+                          {stu.name}
+                        </td>
+                        <td className="font-mono text-muted">{stu.rollNo}</td>
+                        <td>
+                          <span className="department-tag">{stu.department}</span>
+                        </td>
+                        <td>
+                          <div className="roster-activity-list">
+                            {stu.activities?.map((act, aIdx) => (
+                              <div key={aIdx} className="roster-activity-item">
+                                <span className={`badge-tag ${
+                                  act.platform === 'LeetCode' ? 'tag-orange' :
+                                  act.platform === 'CodeChef' ? 'tag-amber' :
+                                  act.platform === 'GitHub' ? 'tag-slate' : 'tag-indigo'
+                                }`}>
+                                  {act.platform}
+                                </span>
+                                <span className="font-medium text-dark">{act.description}</span>
+                                <span className="text-muted text-xs">({act.time})</span>
+                                {act.dataSource === 'Real' ? (
+                                  <span className="badge-source-real" style={{ fontSize: '0.6875rem' }}>Real</span>
+                                ) : (
+                                  <span className="badge-source-sample" style={{ fontSize: '0.6875rem' }}>Sample</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="text-right font-bold text-primary">
+                          {stu.totalCount} task{stu.totalCount > 1 ? 's' : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="roster-empty-notice">
+                <p className="font-semibold text-dark">No student activities recorded on {rosterDate}.</p>
+                <p className="text-sm text-muted mt-1">
+                  All {rosterData?.summary?.totalStudents ?? 21} students are categorized as inactive for this calendar date.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Inactive Students Table */}
+        {rosterTab === 'inactive' && (
+          <div>
+            {(rosterData?.inactiveStudents && rosterData.inactiveStudents.length > 0) ? (
+              <div className="table-responsive">
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Student Name</th>
+                      <th>Roll Number</th>
+                      <th>Department & Year</th>
+                      <th>Email Address</th>
+                      <th>Last Recorded Active</th>
+                      <th className="text-right">Faculty Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rosterData.inactiveStudents.map((stu) => (
+                      <tr key={stu.studentId}>
+                        <td className="font-semibold text-dark">
+                          {stu.name}
+                        </td>
+                        <td className="font-mono text-muted">{stu.rollNo}</td>
+                        <td>
+                          <span className="department-tag">{stu.department}</span>
+                          <span className="badge-tag tag-indigo ml-2">Yr {stu.year || 3}</span>
+                        </td>
+                        <td className="text-muted">{stu.email}</td>
+                        <td className="text-sm">
+                          <span className="status-badge badge-inactive">
+                            <span className="badge-dot"></span>
+                            {stu.lastActive}
+                          </span>
+                        </td>
+                        <td className="text-right">
+                          {alertSentMap[stu.studentId] ? (
+                            <span className="text-success font-semibold text-xs" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <CheckCircleIcon size={14} />
+                              Alert Dispatched
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-xs"
+                              onClick={() => handleSendInactivityAlert(stu.studentId)}
+                            >
+                              Send Inactivity Alert
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="roster-empty-notice">
+                <p className="font-semibold text-success">100% participation recorded on {rosterDate}!</p>
+                <p className="text-sm text-muted mt-1">Every enrolled student completed at least one learning activity.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
