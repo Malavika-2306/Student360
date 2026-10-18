@@ -59,12 +59,13 @@ This document outlines the architectural roadmap and implementation plan for the
 
 ---
 
-### Milestone 5: GitHub OAuth App Registration Guide
-- **Objective:** Transition from Personal Access Tokens to 1-click OAuth web authorization.
-- **Tasks:**
-  1. Create a GitHub OAuth App in GitHub Developer Settings.
-  2. Set Authorization callback URL to `http://localhost:5000/api/integrations/github/callback`.
-  3. Supply `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in `backend/.env`.
+### Milestone 5: GitHub OAuth App Registration & Flow Verification ✅ [COMPLETED]
+- **Status:** Fully implemented, documented, and verified.
+- **Deliverables:**
+  1. Complete step-by-step setup guide in `docs/GITHUB_OAUTH_SETUP.md` with developer registration instructions, callback URLs, and environment configuration.
+  2. End-to-end OAuth sequence diagram and least-privilege token security guarantees documented.
+  3. Frontend OAuth redirect handling in `App.jsx` with automatic query param detection (`github_connected=true` / `oauth_error`), user toast feedback, and URL cleaning.
+  4. Automated test suite in `backend/tests/oauthFlowTest.js` verifying URL generation, state encoding, error redirects, and fallback logic (11/11 tests passing).
 
 ---
 

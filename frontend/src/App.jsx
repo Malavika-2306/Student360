@@ -41,8 +41,22 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Load real data from backend on initial mount
+  // Load real data and check OAuth callback params on initial mount
   useEffect(() => {
+    // Check for OAuth redirect query parameters
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('github_connected') === 'true') {
+        showToast('GitHub account connected successfully via OAuth!');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (urlParams.get('oauth_error')) {
+        showToast(`GitHub OAuth authorization failed: ${urlParams.get('oauth_error')}`);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch {
+      // Ignore URL parsing errors in non-browser environments
+    }
+
     // 1. Load Students
     getStudents()
       .then((res) => {

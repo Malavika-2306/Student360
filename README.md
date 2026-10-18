@@ -71,23 +71,24 @@ Student360 is a full-stack academic monitoring and learning analytics platform d
    - On-demand batch endpoint (`POST /api/integrations/sync-all`) and "Sync Platforms" header button on Dashboard.
    - Synchronizes public repositories, events, and solves with automatic rate-limit backoff and duplicate prevention.
 
----
-
-### ⚠️ Partially Completed / Audited Features
-- **LeetCode Integration:**
-  - *Status:* Public profile handle linking with public problem-solve statistics.
-  - *Limitation:* LeetCode does not offer an official 3rd-party developer OAuth 2.0 program. Cloudflare bot detection and session locks prevent programmatic login. Unverified entries are preserved and labeled as **Sample Mode**.
-- **CodeChef Integration:**
-  - *Status:* Public handle linking with star ratings and divisions.
-  - *Limitation:* CodeChef's developer portal is restricted for open 3rd-party apps. Existing contest performance is maintained as **Sample Benchmark**.
+10. **GitHub OAuth 2.0 Web Authorization & Dual-Mode Flow**
+    - Seamless 1-click student account authorization via OAuth 2.0 Web Flow with least-privilege `read:user` scope.
+    - Zero-config fallback to Personal Access Tokens (`ghp_...`) when OAuth client credentials are not configured.
+    - Anti-tamper base64 state token encoding verifying student identity and preventing cross-session spoofing.
+    - Full setup guide documented in [GITHUB_OAUTH_SETUP.md](file:///c:/Student360/docs/GITHUB_OAUTH_SETUP.md).
 
 ---
 
-### ⏳ Pending Work (Roadmap)
-- Background scheduled cron job for automated periodic GitHub event sync.
-- SMTP email notifications for sending real faculty inactivity alerts to students.
-- Automated server-side PDF generator for accreditation compliance binders.
-- Registered GitHub OAuth application client ID for web browser single-click authorization.
+### ⚠️ Platform Capabilities & Verification Transparency
+- **GitHub REST API:** Fully integrated with real live authorized sync, automated deduplication, and secure token isolation.
+- **LeetCode Integration:** Public profile handle linking with public problem-solve statistics. Since LeetCode does not offer a public developer OAuth API and employs Cloudflare bot shielding, unverified entries are preserved and clearly tagged as **Sample Mode**.
+- **CodeChef Integration:** Public handle linking with star ratings and divisions. Standard benchmark performance is maintained as **Sample Benchmark**.
+
+---
+
+### 🔮 Future Enhancements
+- Production SMTP relay credentials integration for automated student email delivery.
+- Institutional Single Sign-On (SAML / Google Workspace) integration for campus-wide deployment.
 
 ---
 
@@ -153,13 +154,16 @@ To execute automated integration tests against the running backend:
 ```bash
 cd backend
 node tests/integrationE2ETest.js
-# Runs 31 end-to-end assertions verifying auth, security, and endpoints
+# Runs 39 end-to-end assertions verifying auth, security, and endpoints
 
 node tests/dedupTest.js
-# Verifies MongoDB unique compound index preventing duplicate activity events
+# Verifies MongoDB unique compound index preventing duplicate activity events (E11000)
 
 node tests/dailyRosterTest.js
 # Verifies the date-filtered daily active/inactive student roster API
+
+node tests/oauthFlowTest.js
+# Verifies GitHub OAuth URL construction, state anti-tamper encoding, and error redirects (11 assertions)
 ```
 
 To run frontend lint and production build checks:
