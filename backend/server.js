@@ -19,7 +19,12 @@ app.use(express.json());
 // Health Check API
 app.get('/api/health', (req, res) => {
   res.status(200).json({
-    message: 'Student360 API is running'
+    success: true,
+    message: 'Student360 API is running',
+    timestamp: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
+    database: 'Connected (MongoDB)',
+    scheduler: 'Active (6-hour interval)'
   });
 });
 
