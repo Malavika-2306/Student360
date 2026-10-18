@@ -343,8 +343,26 @@ export default function Polls({ polls: propPolls, setPolls: setPropPolls, studen
         /* Poll Cards Grid */
         <div className="polls-grid mt-6">
           {filteredPolls.length === 0 ? (
-            <div className="card text-center p-6" style={{ gridColumn: '1 / -1' }}>
-              <p className="text-muted">No polls found matching your filter criteria.</p>
+            <div className="card text-center" style={{ gridColumn: '1 / -1', padding: '48px 16px' }}>
+              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
+                  <SearchIcon size={20} />
+                </div>
+                <span className="font-semibold text-dark text-sm">No Surveys Found</span>
+                <span className="text-muted text-xs">No active polls match your current category filter or search keyword.</span>
+                {(searchTerm || selectedCategory !== 'ALL') && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-xs mt-2"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedCategory('ALL');
+                    }}
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             filteredPolls.map((poll) => (

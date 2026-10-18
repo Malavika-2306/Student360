@@ -34,7 +34,7 @@ export default function Analytics() {
 
   const [departmentList, setDepartmentList] = useState([]);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -61,11 +61,11 @@ export default function Analytics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, []);
+  }, [fetchAnalyticsData]);
 
   const total = dashboardMetrics.totalStudents || 21;
   const activePercent = total > 0 ? Math.round((dashboardMetrics.activeToday / total) * 100) : 0;

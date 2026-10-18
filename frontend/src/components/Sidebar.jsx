@@ -17,11 +17,11 @@ export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIs
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
     { id: 'students', label: 'Students', icon: <StudentsIcon /> },
+    { id: 'activity', label: 'Platform Activity', icon: <ActivityIcon /> },
     { id: 'polls', label: 'Polls', icon: <PollsIcon /> },
-    { id: 'activity', label: 'Activity', icon: <ActivityIcon /> },
     { id: 'reports', label: 'Reports', icon: <ReportsIcon /> },
     { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
-    { id: 'settings', label: 'Settings', icon: <SettingsIcon /> },
+    { id: 'settings', label: 'System Status', icon: <SettingsIcon /> },
   ];
 
   const handleNavClick = (id) => {

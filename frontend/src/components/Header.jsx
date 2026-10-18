@@ -14,8 +14,16 @@ export default function Header({ activePage, onToggleMobileMenu, globalSearch, s
     { id: 3, text: "Weekly attendance & streak report generated.", time: "3h ago", unread: false }
   ];
 
-  // Capitalize active page name
-  const pageTitle = activePage.charAt(0).toUpperCase() + activePage.slice(1);
+  const pageTitleMap = {
+    dashboard: 'Dashboard',
+    students: 'Students Directory',
+    activity: 'Platform Activity',
+    polls: 'Polls & Surveys',
+    reports: 'Accreditation Reports',
+    analytics: 'Analytics & Trends',
+    settings: 'System Status'
+  };
+  const pageTitle = pageTitleMap[activePage] || (activePage.charAt(0).toUpperCase() + activePage.slice(1));
 
   return (
     <header className="app-header">

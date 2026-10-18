@@ -2,38 +2,50 @@ import React from 'react';
 
 /**
  * Reusable StatusBadge component
- * Displays status with clean color coding:
- * - Active: green
- * - Inactive: red
- * - Interested: green/emerald
- * - Not Interested: slate/amber
- * - Not Responded: red/rose
+ * Displays status with clean color coding and clear semantic meaning:
+ * - Activity Detected: Emerald green
+ * - No Activity Detected: Amber
+ * - Data Unavailable: Slate/Red warning
+ * - Active: Green
+ * - Inactive: Red
+ * - Interested: Green/Emerald
+ * - Not Interested: Amber
+ * - Not Responded: Red
  */
 export default function StatusBadge({ status, text, type = 'status' }) {
-  // If boolean was passed
-  const isPositive = status === true || status === 'Active' || status === 'active' || status === 'Interested';
-  const isNotInterested = status === 'Not Interested';
-  const isNotResponded = status === 'not_responded' || status === 'Not Responded';
-
   let badgeClass = 'badge-inactive';
   let displayText = text;
 
-  if (type === 'pollAnswer') {
+  // 1. Activity Roster & Platform Sync Specific Types
+  if (type === 'activityDetection' || status === 'activity_detected' || status === 'Activity Detected') {
+    badgeClass = 'badge-active-detected';
+    displayText = displayText || 'Activity Detected';
+  } else if (status === 'no_activity' || status === 'No Activity Detected') {
+    badgeClass = 'badge-no-activity';
+    displayText = displayText || 'No Activity Detected';
+  } else if (status === 'data_unavailable' || status === 'Data Unavailable' || status === 'unavailable') {
+    badgeClass = 'badge-data-unavailable';
+    displayText = displayText || 'Data Unavailable';
+  }
+  // 2. Poll Answer Types
+  else if (type === 'pollAnswer') {
     if (status === 'Interested') {
       badgeClass = 'badge-interested';
       displayText = displayText || 'Interested';
-    } else if (isNotInterested) {
+    } else if (status === 'Not Interested') {
       badgeClass = 'badge-not-interested';
       displayText = displayText || 'Not Interested';
-    } else if (isNotResponded) {
+    } else if (status === 'not_responded' || status === 'Not Responded') {
       badgeClass = 'badge-not-responded';
       displayText = displayText || 'Not Responded';
     } else {
       badgeClass = 'badge-neutral';
       displayText = displayText || status;
     }
-  } else {
-    // Normal active / inactive
+  } 
+  // 3. Default Active / Inactive
+  else {
+    const isPositive = status === true || status === 'Active' || status === 'active';
     if (isPositive) {
       badgeClass = 'badge-active';
       displayText = displayText || 'Active';

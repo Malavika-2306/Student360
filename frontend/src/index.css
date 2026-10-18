@@ -4,54 +4,68 @@
 
 :root {
   /* Colors */
-  --bg-page: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-sidebar: #0f172a;
-  --bg-sidebar-hover: #1e293b;
-  --bg-sidebar-active: #1e293b;
+  --bg-page: #F5F7FB;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #14213D;
+  --bg-sidebar-hover: #1D2D50;
+  --bg-sidebar-active: #1D2D50;
 
-  --border-subtle: #e2e8f0;
-  --border-light: #f1f5f9;
+  --border-subtle: #E2E8F0;
+  --border-light: #F1F5F9;
 
-  --text-main: #0f172a;
+  --text-main: #0F172A;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-inverse: #f8fafc;
+  --text-muted: #64748B;
+  --text-inverse: #F8FAFC;
 
   /* Brand Accents */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-light: #EFF6FF;
+  --primary-border: #BFDBFE;
 
-  --success: #16a34a;
-  --success-light: #ecfdf5;
-  --success-border: #bbf7d0;
+  --success: #16A34A;
+  --success-light: #F0FDF4;
+  --success-border: #BBF7D0;
 
-  --danger: #dc2626;
-  --danger-light: #fef2f2;
-  --danger-border: #fecaca;
+  --danger: #DC2626;
+  --danger-light: #FEF2F2;
+  --danger-border: #FECACA;
 
-  --warning: #d97706;
-  --warning-light: #fffbeb;
-  --warning-border: #fde68a;
+  --warning: #D97706;
+  --warning-light: #FFFBEB;
+  --warning-border: #FDE68A;
 
-  --indigo: #4f46e5;
-  --indigo-light: #eef2ff;
+  --indigo: #4F46E5;
+  --indigo-light: #EEF2FF;
+  --indigo-border: #C7D2FE;
+
+  /* Platform Accent Colors */
+  --color-leetcode: #F59E0B;
+  --color-leetcode-bg: #FFFBEB;
+  --color-codechef: #D97706;
+  --color-codechef-bg: #FEF3C7;
+  --color-github: #0F172A;
+  --color-github-bg: #F1F5F9;
 
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-dropdown: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  /* Shadows - Modern SaaS elevation */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+  --shadow-card-hover: 0 10px 20px -3px rgba(20, 33, 61, 0.09), 0 4px 6px -2px rgba(20, 33, 61, 0.04);
+  --shadow-dropdown: 0 12px 28px -4px rgba(15, 23, 42, 0.15);
 
   /* Radius */
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
   /* Transitions */

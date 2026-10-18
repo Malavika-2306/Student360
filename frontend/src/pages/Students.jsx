@@ -452,8 +452,27 @@ export default function Students({
               <tbody>
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="table-empty">
-                      {loading ? "Refreshing records..." : "No students found matching your search and filter criteria."}
+                    <td colSpan="9" style={{ padding: '48px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
+                          <SearchIcon size={20} />
+                        </div>
+                        <span className="font-semibold text-dark text-sm">No Students Found</span>
+                        <span className="text-muted text-xs">No records matched your search query or department filter.</span>
+                        {(searchTerm || selectedDept !== 'ALL' || selectedStatus !== 'ALL') && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-xs mt-2"
+                            onClick={() => {
+                              setSearchTerm('');
+                              setSelectedDept('ALL');
+                              setSelectedStatus('ALL');
+                            }}
+                          >
+                            Reset Filters
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (

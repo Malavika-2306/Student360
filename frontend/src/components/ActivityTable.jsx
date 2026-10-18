@@ -1,4 +1,4 @@
-import React from 'react';
+import { ActivityIcon } from './Icons';
 
 /**
  * ActivityTable Component
@@ -8,7 +8,7 @@ export default function ActivityTable({ activities = [], limit }) {
   const displayedActivities = limit ? activities.slice(0, limit) : activities;
 
   const getPlatformBadgeClass = (platform) => {
-    switch (platform.toLowerCase()) {
+    switch ((platform || '').toLowerCase()) {
       case 'leetcode':
         return 'platform-badge platform-leetcode';
       case 'codechef':
@@ -38,7 +38,15 @@ export default function ActivityTable({ activities = [], limit }) {
         <tbody>
           {displayedActivities.length === 0 ? (
             <tr>
-              <td colSpan="6" className="table-empty">No recent activity found.</td>
+              <td colSpan="6" style={{ padding: '40px 16px', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--bg-page)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
+                    <ActivityIcon size={22} />
+                  </div>
+                  <span className="font-semibold text-dark text-sm">No Recent Learning Activity</span>
+                  <span className="text-muted text-xs">Trigger platform sync or select a wider timeframe to inspect student submissions.</span>
+                </div>
+              </td>
             </tr>
           ) : (
             displayedActivities.map((act) => (

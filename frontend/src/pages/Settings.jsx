@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CheckCircleIcon, 
-  AlertCircleIcon, 
   RefreshIcon 
 } from '../components/Icons';
 import { checkHealth, syncAllPlatforms } from '../services/api';

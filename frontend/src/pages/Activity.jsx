@@ -129,7 +129,7 @@ export default function Activity({ activities: propActivities, onTriggerToast })
     }
   };
 
-  const fetchActivityData = async () => {
+  const fetchActivityData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -180,11 +180,11 @@ export default function Activity({ activities: propActivities, onTriggerToast })
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchActivityData();
-  }, []);
+  }, [fetchActivityData]);
 
   // Calculate highest count to scale bar chart heights accurately
   const maxCount = Math.max(...weeklyTrend.map((d) => d.count), 1);
@@ -458,7 +458,7 @@ export default function Activity({ activities: propActivities, onTriggerToast })
             className={`roster-tab-btn ${rosterTab === 'active' ? 'active' : ''}`}
             onClick={() => setRosterTab('active')}
           >
-            <span>Active Learners</span>
+            <span>Activity Detected</span>
             <span className="roster-tab-badge">{rosterData?.activeStudents?.length ?? 0}</span>
           </button>
           <button
@@ -466,7 +466,7 @@ export default function Activity({ activities: propActivities, onTriggerToast })
             className={`roster-tab-btn ${rosterTab === 'inactive' ? 'active' : ''}`}
             onClick={() => setRosterTab('inactive')}
           >
-            <span>No Recorded Activity</span>
+            <span>No Activity Detected</span>
             <span className="roster-tab-badge">{rosterData?.inactiveStudents?.length ?? 0}</span>
           </button>
         </div>
@@ -482,6 +482,7 @@ export default function Activity({ activities: propActivities, onTriggerToast })
                       <th>Student Name</th>
                       <th>Roll Number</th>
                       <th>Department</th>
+                      <th>Status</th>
                       <th>Completed Activities on {rosterDate}</th>
                       <th className="text-right">Total Tasks</th>
                     </tr>
@@ -495,6 +496,12 @@ export default function Activity({ activities: propActivities, onTriggerToast })
                         <td className="font-mono text-muted">{stu.rollNo}</td>
                         <td>
                           <span className="department-tag">{stu.department}</span>
+                        </td>
+                        <td>
+                          <span className="status-badge badge-active-detected">
+                            <span className="badge-dot"></span>
+                            Activity Detected
+                          </span>
                         </td>
                         <td>
                           <div className="roster-activity-list">
@@ -530,7 +537,7 @@ export default function Activity({ activities: propActivities, onTriggerToast })
               <div className="roster-empty-notice">
                 <p className="font-semibold text-dark">No student activities recorded on {rosterDate}.</p>
                 <p className="text-sm text-muted mt-1">
-                  All {rosterData?.summary?.totalStudents ?? 21} students are categorized as inactive for this calendar date.
+                  All {rosterData?.summary?.totalStudents ?? 21} students are categorized as having no recorded activity for this calendar date.
                 </p>
               </div>
             )}
@@ -570,7 +577,8 @@ export default function Activity({ activities: propActivities, onTriggerToast })
                         <th>Roll Number</th>
                         <th>Department & Year</th>
                         <th>Email Address</th>
-                        <th>Last Recorded Active</th>
+                        <th>Activity Status</th>
+                        <th>Last Active</th>
                         <th className="text-right">Faculty Action</th>
                       </tr>
                     </thead>
@@ -586,11 +594,14 @@ export default function Activity({ activities: propActivities, onTriggerToast })
                             <span className="badge-tag tag-indigo ml-2">Yr {stu.year || 3}</span>
                           </td>
                           <td className="text-muted">{stu.email}</td>
-                          <td className="text-sm">
-                            <span className="status-badge badge-inactive">
+                          <td>
+                            <span className="status-badge badge-no-activity">
                               <span className="badge-dot"></span>
-                              {stu.lastActive}
+                              No Activity Detected
                             </span>
+                          </td>
+                          <td className="text-xs text-muted">
+                            {stu.lastActive || 'Not recorded'}
                           </td>
                           <td className="text-right">
                             {alertSentMap[stu.studentId] ? (

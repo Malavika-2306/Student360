@@ -114,24 +114,30 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
   const platformData = [
     { 
       name: 'LeetCode', 
+      tag: 'Algorithmic Problems',
       active: leetcodeActive, 
       total: totalStudents, 
       percentage: totalStudents > 0 ? Math.round((leetcodeActive / totalStudents) * 100) : 0, 
-      color: 'bar-orange' 
+      color: 'bar-orange',
+      badgeClass: 'tag-orange'
     },
     { 
       name: 'CodeChef', 
+      tag: 'Contests & Rating',
       active: codechefActive, 
       total: totalStudents, 
       percentage: totalStudents > 0 ? Math.round((codechefActive / totalStudents) * 100) : 0, 
-      color: 'bar-amber' 
+      color: 'bar-amber',
+      badgeClass: 'tag-amber'
     },
     { 
       name: 'GitHub', 
+      tag: 'Commits & Repositories',
       active: githubActive, 
       total: totalStudents, 
       percentage: totalStudents > 0 ? Math.round((githubActive / totalStudents) * 100) : 0, 
-      color: 'bar-slate' 
+      color: 'bar-slate',
+      badgeClass: 'tag-slate'
     }
   ];
 
@@ -272,9 +278,12 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
             {platformData.map((plat) => (
               <div key={plat.name} className="platform-bar-item">
                 <div className="platform-bar-labels">
-                  <span className="platform-name font-semibold">{plat.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="platform-name font-semibold text-dark">{plat.name}</span>
+                    <span className={`badge-tag ${plat.badgeClass}`} style={{ fontSize: '0.6875rem' }}>{plat.tag}</span>
+                  </div>
                   <span className="platform-count">
-                    <strong>{plat.active}</strong> active students ({plat.percentage}%)
+                    <strong>{plat.active}</strong> of {totalStudents} ({plat.percentage}%)
                   </span>
                 </div>
                 <div className="custom-progress-track">
