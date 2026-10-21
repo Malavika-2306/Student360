@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
@@ -8,14 +8,17 @@ import Activity from './pages/Activity';
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
-import { getStudents, getPolls, getActivity } from './services/api';
+import Login from './pages/Login';
+import { getStudents, getPolls, getActivity, getMe, logout } from './services/api';
 import './App.css';
 
 /**
  * Student360 – Learning Activity & Performance Analytics
- * Root Application Component
+ * Root Application Component with Secure Authentication & Role-Based Access Control
  */
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activePage, setActivePage] = useState('dashboard');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
@@ -28,21 +31,88 @@ export default function App() {
   // Toast notification system
   const [toast, setToast] = useState(null);
 
-  const showToast = (message) => {
+  const showToast = useCallback((message) => {
     setToast(message);
     setTimeout(() => {
       setToast(null);
     }, 3800);
+  }, []);
+
+  const handleLogoutClean = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('student360_token');
+      localStorage.removeItem('student360_user');
+    }
+    setUser(null);
+    setActivePage('dashboard');
+    setStudents([]);
+    setPolls([]);
+    setActivities([]);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Ignore logout API failures
+    }
+    handleLogoutClean();
+    showToast('You have been signed out.');
   };
 
-  // Quick navigation helper
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setActivePage('dashboard');
+    showToast(`Signed in successfully as ${userData.name}`);
+  };
+
+  // Safe navigation with client-side role guard
   const handleNavigate = (pageId) => {
+    if (user?.role === 'student' && ['students', 'reports', 'analytics', 'settings'].includes(pageId)) {
+      showToast('Access restricted: This section requires faculty administrative privileges.');
+      setActivePage('dashboard');
+      return;
+    }
     setActivePage(pageId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Load real data and check OAuth callback params on initial mount
+  // 1. Session Restoration on initial mount
   useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('student360_token') : null;
+    if (token) {
+      getMe()
+        .then((res) => {
+          if (res && res.user) {
+            setUser(res.user);
+            localStorage.setItem('student360_user', JSON.stringify(res.user));
+          } else {
+            handleLogoutClean();
+          }
+        })
+        .catch(() => {
+          handleLogoutClean();
+        })
+        .finally(() => {
+          setAuthLoading(false);
+        });
+    } else {
+      setAuthLoading(false);
+    }
+
+    const handleExpired = () => {
+      handleLogoutClean();
+      showToast('Your session has expired. Please sign in again.');
+    };
+
+    window.addEventListener('auth:session_expired', handleExpired);
+    return () => window.removeEventListener('auth:session_expired', handleExpired);
+  }, [handleLogoutClean, showToast]);
+
+  // 2. Load Real App Data whenever authenticated user changes
+  useEffect(() => {
+    if (!user) return;
+
     // Check for OAuth redirect query parameters
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -54,10 +124,10 @@ export default function App() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     } catch {
-      // Ignore URL parsing errors in non-browser environments
+      // Ignore URL parsing errors
     }
 
-    // 1. Load Students
+    // Load Students (scoped to student's own record if role === 'student')
     getStudents()
       .then((res) => {
         if (res && res.data && res.data.length > 0) {
@@ -80,13 +150,15 @@ export default function App() {
             };
           });
           setStudents(normalized);
+        } else {
+          setStudents([]);
         }
       })
       .catch((err) => {
-        console.warn('Backend students fetch failed, using fallback:', err.message);
+        console.warn('Backend students fetch failed:', err.message);
       });
 
-    // 2. Load Polls
+    // Load Polls
     getPolls()
       .then((res) => {
         if (res && res.data && res.data.length > 0) {
@@ -94,10 +166,10 @@ export default function App() {
         }
       })
       .catch((err) => {
-        console.warn('Backend polls fetch failed, using fallback:', err.message);
+        console.warn('Backend polls fetch failed:', err.message);
       });
 
-    // 3. Load Activity
+    // Load Activity
     getActivity()
       .then((res) => {
         if (res && res.data && res.data.length > 0) {
@@ -113,11 +185,46 @@ export default function App() {
         }
       })
       .catch((err) => {
-        console.warn('Backend activity fetch failed, using fallback:', err.message);
+        console.warn('Backend activity fetch failed:', err.message);
       });
-  }, []);
+  }, [user, showToast]);
 
-  // Render the current page
+  // Loading Screen while restoring JWT session
+  if (authLoading) {
+    return (
+      <div className="auth-loading-screen">
+        <div className="login-logo-badge">
+          <span className="login-logo-symbol">360°</span>
+        </div>
+        <div className="login-spinner" style={{ width: '28px', height: '28px', borderTopColor: '#2563EB', borderColor: '#BFDBFE' }}></div>
+        <p style={{ fontWeight: 600, fontSize: '0.9375rem', color: '#475569' }}>Validating secure session...</p>
+      </div>
+    );
+  }
+
+  // If unauthenticated, display Login Portal
+  if (!user) {
+    return (
+      <>
+        <Login onLoginSuccess={handleLoginSuccess} />
+        {toast && (
+          <div className="toast-notification">
+            <span className="toast-dot"></span>
+            <span className="toast-message">{toast}</span>
+            <button 
+              type="button" 
+              className="toast-close-btn"
+              onClick={() => setToast(null)}
+            >
+              &times;
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Render the current authenticated page
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
@@ -128,9 +235,22 @@ export default function App() {
             activities={activities} 
             onNavigate={handleNavigate}
             onTriggerToast={showToast}
+            user={user}
           />
         );
       case 'students':
+        if (user.role === 'student') {
+          return (
+            <Dashboard 
+              students={students} 
+              polls={polls} 
+              activities={activities} 
+              onNavigate={handleNavigate}
+              onTriggerToast={showToast}
+              user={user}
+            />
+          );
+        }
         return (
           <Students 
             students={students} 
@@ -156,6 +276,18 @@ export default function App() {
           />
         );
       case 'reports':
+        if (user.role === 'student') {
+          return (
+            <Dashboard 
+              students={students} 
+              polls={polls} 
+              activities={activities} 
+              onNavigate={handleNavigate}
+              onTriggerToast={showToast}
+              user={user}
+            />
+          );
+        }
         return (
           <Reports 
             students={students}
@@ -163,10 +295,34 @@ export default function App() {
           />
         );
       case 'analytics':
+        if (user.role === 'student') {
+          return (
+            <Dashboard 
+              students={students} 
+              polls={polls} 
+              activities={activities} 
+              onNavigate={handleNavigate}
+              onTriggerToast={showToast}
+              user={user}
+            />
+          );
+        }
         return (
           <Analytics />
         );
       case 'settings':
+        if (user.role === 'student') {
+          return (
+            <Dashboard 
+              students={students} 
+              polls={polls} 
+              activities={activities} 
+              onNavigate={handleNavigate}
+              onTriggerToast={showToast}
+              user={user}
+            />
+          );
+        }
         return (
           <Settings 
             onTriggerToast={showToast} 
@@ -179,6 +335,8 @@ export default function App() {
             polls={polls} 
             activities={activities} 
             onNavigate={handleNavigate}
+            onTriggerToast={showToast}
+            user={user}
           />
         );
     }
@@ -186,12 +344,14 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      {/* Sidebar */}
+      {/* Sidebar with role-based navigation and signout */}
       <Sidebar 
         activePage={activePage} 
         setActivePage={handleNavigate}
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
+        user={user}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -202,6 +362,8 @@ export default function App() {
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
           onQuickNavigate={handleNavigate}
+          user={user}
+          onLogout={handleLogout}
         />
 
         <main className="app-main-content">

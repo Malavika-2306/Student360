@@ -9,9 +9,16 @@
 
 const http = require('http');
 
+let authToken = '';
+
 function request(options, body = null) {
   return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
+    const headers = {
+      ...(options.headers || {}),
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+    };
+    const req = http.request({ ...options, headers }, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
@@ -53,6 +60,15 @@ async function runTests() {
   }
 
   try {
+    // Authenticate as Admin
+    const loginRes = await request({
+      hostname: 'localhost',
+      port: 5000,
+      path: '/api/auth/login',
+      method: 'POST'
+    }, { email: 'admin@student360.edu', password: 'Admin@Student360' });
+    authToken = loginRes.data?.token;
+
     // 1. Get first student
     console.log('1. Fetching a student for testing...');
     const studentsRes = await request({

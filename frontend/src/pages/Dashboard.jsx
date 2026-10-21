@@ -37,7 +37,8 @@ function formatActivityTime(timeStr) {
  * Dashboard Page
  * Real-time student activity overview connected to GET /api/dashboard.
  */
-export default function Dashboard({ students = [], polls = [], activities = [], onNavigate, onTriggerToast }) {
+export default function Dashboard({ students = [], polls = [], activities = [], onNavigate, onTriggerToast, user }) {
+  const isStudent = user?.role === 'student';
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -158,8 +159,13 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
       {/* Page Title & Subtitle */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Welcome back! Here's today's student activity overview.</p>
+          <h1 className="page-title">{isStudent ? 'My Learning Overview' : 'Dashboard'}</h1>
+          <p className="page-subtitle">
+            {isStudent 
+              ? `Welcome back, ${user?.name || 'Student'}! Here is your performance activity and campus metrics.`
+              : "Welcome back! Here's today's student activity overview."
+            }
+          </p>
         </div>
         <div className="page-header-actions">
           <button 
@@ -173,25 +179,37 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
             <span>{loading ? "Refreshing..." : "Refresh"}</span>
           </button>
 
-          <button 
-            type="button" 
-            className="btn btn-outline"
-            onClick={handleSyncAll}
-            disabled={syncingAll}
-            title="Synchronize connected GitHub, LeetCode, and CodeChef accounts across all students"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            <RefreshIcon size={14} className={syncingAll ? 'spin' : ''} />
-            <span>{syncingAll ? 'Syncing...' : 'Sync Platforms'}</span>
-          </button>
+          {!isStudent && (
+            <button 
+              type="button" 
+              className="btn btn-outline"
+              onClick={handleSyncAll}
+              disabled={syncingAll}
+              title="Synchronize connected GitHub, LeetCode, and CodeChef accounts across all students"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <RefreshIcon size={14} className={syncingAll ? 'spin' : ''} />
+              <span>{syncingAll ? 'Syncing...' : 'Sync Platforms'}</span>
+            </button>
+          )}
 
-          <button 
-            type="button" 
-            className="btn btn-primary"
-            onClick={() => onNavigate('students')}
-          >
-            Manage Students
-          </button>
+          {!isStudent ? (
+            <button 
+              type="button" 
+              className="btn btn-primary"
+              onClick={() => onNavigate('students')}
+            >
+              Manage Students
+            </button>
+          ) : (
+            <button 
+              type="button" 
+              className="btn btn-primary"
+              onClick={() => onNavigate('activity')}
+            >
+              View My Activity
+            </button>
+          )}
         </div>
       </div>
 
@@ -307,7 +325,7 @@ export default function Dashboard({ students = [], polls = [], activities = [], 
             <button 
               type="button" 
               className="btn-text text-xs" 
-              onClick={() => onNavigate('students')}
+              onClick={() => onNavigate(isStudent ? 'activity' : 'students')}
               style={{ padding: 0 }}
             >
               Sync Accounts &rarr;

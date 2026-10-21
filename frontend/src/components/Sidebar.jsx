@@ -11,18 +11,23 @@ import {
 
 /**
  * Sidebar Component
- * Left dark navy navigation with logo, navigation links, and admin profile card.
+ * Left dark navy navigation with logo, role-filtered navigation links, user chip, and logout button.
  */
-export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIsMobileOpen }) {
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { id: 'students', label: 'Students', icon: <StudentsIcon /> },
-    { id: 'activity', label: 'Platform Activity', icon: <ActivityIcon /> },
-    { id: 'polls', label: 'Polls', icon: <PollsIcon /> },
-    { id: 'reports', label: 'Reports', icon: <ReportsIcon /> },
-    { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
-    { id: 'settings', label: 'System Status', icon: <SettingsIcon /> },
+export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIsMobileOpen, user, onLogout }) {
+  const isStudent = user?.role === 'student';
+
+  // Role-based navigation: students see only permitted features
+  const allNavItems = [
+    { id: 'dashboard', label: isStudent ? 'My Overview' : 'Dashboard', icon: <DashboardIcon />, roles: ['admin', 'student'] },
+    { id: 'students', label: 'Students', icon: <StudentsIcon />, roles: ['admin'] },
+    { id: 'activity', label: 'Platform Activity', icon: <ActivityIcon />, roles: ['admin', 'student'] },
+    { id: 'polls', label: 'Polls & Surveys', icon: <PollsIcon />, roles: ['admin', 'student'] },
+    { id: 'reports', label: 'Reports', icon: <ReportsIcon />, roles: ['admin'] },
+    { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon />, roles: ['admin'] },
+    { id: 'settings', label: 'System Status', icon: <SettingsIcon />, roles: ['admin'] },
   ];
+
+  const navItems = allNavItems.filter((item) => item.roles.includes(user?.role || 'admin'));
 
   const handleNavClick = (id) => {
     setActivePage(id);
@@ -30,6 +35,9 @@ export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIs
       setIsMobileOpen(false); // Close drawer on mobile after clicking
     }
   };
+
+  const initial = user?.name ? user.name.charAt(0).toUpperCase() : (isStudent ? 'S' : 'A');
+  const roleLabel = isStudent ? 'Student (Enrolled)' : 'Administrator (Faculty)';
 
   return (
     <>
@@ -49,7 +57,7 @@ export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIs
           </div>
           <div className="brand-text-container">
             <h2 className="brand-title">Student360</h2>
-            <span className="brand-subtitle">Learning Analytics</span>
+            <span className="brand-subtitle">{isStudent ? 'Student Portal' : 'Learning Analytics'}</span>
           </div>
 
           {/* Close button for mobile */}
@@ -65,7 +73,7 @@ export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIs
 
         {/* Navigation items */}
         <nav className="sidebar-nav">
-          <div className="nav-section-label">MAIN MENU</div>
+          <div className="nav-section-label">{isStudent ? 'STUDENT MENU' : 'MAIN MENU'}</div>
           <ul className="nav-list">
             {navItems.map((item) => {
               const isActive = activePage === item.id;
@@ -86,17 +94,32 @@ export default function Sidebar({ activePage, setActivePage, isMobileOpen, setIs
           </ul>
         </nav>
 
-        {/* Bottom Admin Profile */}
+        {/* Bottom User Profile & Sign Out */}
         <div className="sidebar-footer">
           <div className="admin-profile-card">
             <div className="admin-avatar">
-              <span>M</span>
-              <span className="admin-status-dot" title="Online"></span>
+              <span>{initial}</span>
+              <span className="admin-status-dot" title="Authenticated session active"></span>
             </div>
             <div className="admin-info">
-              <span className="admin-name">Dr. Malavika</span>
-              <span className="admin-role">Admin (CSE Dept)</span>
+              <span className="admin-name">{user?.name || 'Authorized User'}</span>
+              <span className="admin-role">{roleLabel}</span>
             </div>
+            {onLogout && (
+              <button
+                type="button"
+                className="sidebar-logout-btn"
+                onClick={onLogout}
+                title="Sign out of Student360"
+                aria-label="Sign out"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </aside>

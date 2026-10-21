@@ -6,6 +6,23 @@ const Student = require('../models/Student');
  */
 exports.getAllStudents = async (req, res, next) => {
   try {
+    // If authenticated user is a student, scope data strictly to their own profile
+    if (req.user && req.user.role === 'student') {
+      if (!req.user.studentId) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          data: []
+        });
+      }
+      const selfStudent = await Student.findById(req.user.studentId);
+      return res.status(200).json({
+        success: true,
+        count: selfStudent ? 1 : 0,
+        data: selfStudent ? [selfStudent] : []
+      });
+    }
+
     const students = await Student.find().sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
@@ -23,6 +40,16 @@ exports.getAllStudents = async (req, res, next) => {
  */
 exports.getStudentById = async (req, res, next) => {
   try {
+    // Ensure student role cannot query other students
+    if (req.user && req.user.role === 'student') {
+      if (!req.user.studentId || req.user.studentId.toString() !== req.params.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: You are only authorized to view your own student record.'
+        });
+      }
+    }
+
     const student = await Student.findById(req.params.id);
     if (!student) {
       return res.status(404).json({

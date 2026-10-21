@@ -14,6 +14,9 @@ function request(options) {
       });
     });
     req.on('error', reject);
+    if (options.body) {
+      req.write(options.body);
+    }
     req.end();
   });
 }
@@ -21,12 +24,24 @@ function request(options) {
 async function run() {
   console.log('=== Testing Daily Roster API (/api/activity/daily-roster) ===\n');
 
+  // Authenticate as Admin
+  const authRes = await request({
+    hostname: 'localhost',
+    port: 5000,
+    path: '/api/auth/login',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@student360.edu', password: 'Admin@Student360' })
+  });
+  const token = authRes.data?.token;
+
   // Test 1: Default today
   const res1 = await request({
     hostname: 'localhost',
     port: 5000,
     path: '/api/activity/daily-roster',
-    method: 'GET'
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` }
   });
 
   console.log('1. GET /api/activity/daily-roster:');
@@ -67,7 +82,8 @@ async function run() {
     hostname: 'localhost',
     port: 5000,
     path: '/api/activity/daily-roster?date=2026-10-10',
-    method: 'GET'
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` }
   });
   console.log(`   Status: ${res2.statusCode}`);
   console.log(`   Date: ${res2.data.date}`);

@@ -1,13 +1,16 @@
 const API_BASE_URL = '/api';
 
 /**
- * Universal fetch wrapper for handling API calls with JSON serialization and errors.
+ * Universal fetch wrapper for handling API calls with JSON serialization, JWT tokens, and error handling.
  */
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   
+  const token = typeof window !== 'undefined' ? localStorage.getItem('student360_token') : null;
+
   const headers = {
     'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     ...(options.headers || {})
   };
 
@@ -25,6 +28,14 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 401 && !endpoint.includes('/auth/login')) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('student360_token');
+          localStorage.removeItem('student360_user');
+          window.dispatchEvent(new CustomEvent('auth:session_expired'));
+        }
+      }
+
       const errorMessage = data?.message || data?.error || `HTTP error! status: ${response.status}`;
       const err = new Error(errorMessage);
       err.status = response.status;
@@ -38,6 +49,30 @@ async function apiRequest(endpoint, options = {}) {
     throw error;
   }
 }
+
+// -------------------------------------------------------------
+// Authentication API
+// -------------------------------------------------------------
+export const login = (email, password) => 
+  apiRequest('/auth/login', { method: 'POST', body: { email, password } });
+
+export const register = (userData) => 
+  apiRequest('/auth/register', { method: 'POST', body: userData });
+
+export const logout = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('student360_token');
+    localStorage.removeItem('student360_user');
+  }
+  return apiRequest('/auth/logout', { method: 'POST' });
+};
+
+export const getMe = () => apiRequest('/auth/me');
+
+export const provisionStudent = (studentData) => 
+  apiRequest('/auth/provision-student', { method: 'POST', body: studentData });
+
+export const getAuthUsers = () => apiRequest('/auth/users');
 
 // -------------------------------------------------------------
 // Students API
@@ -190,5 +225,11 @@ export default {
   syncPlatform,
   disconnectPlatform,
   getPlatformCapabilities,
-  checkHealth
+  checkHealth,
+  login,
+  register,
+  logout,
+  getMe,
+  provisionStudent,
+  getAuthUsers
 };

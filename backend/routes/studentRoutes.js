@@ -10,21 +10,22 @@ const {
   getActiveStudentsToday,
   getInactiveStudentsToday
 } = require('../controllers/studentController');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Specific sub-routes first
-router.get('/search', searchStudents);
-router.get('/active/today', getActiveStudentsToday);
-router.get('/inactive/today', getInactiveStudentsToday);
+// Specific admin-only sub-routes
+router.get('/search', protect, authorize('admin'), searchStudents);
+router.get('/active/today', protect, authorize('admin'), getActiveStudentsToday);
+router.get('/inactive/today', protect, authorize('admin'), getInactiveStudentsToday);
 
 // Root routes
 router.route('/')
-  .get(getAllStudents)
-  .post(createStudent);
+  .get(protect, getAllStudents)
+  .post(protect, authorize('admin'), createStudent);
 
 // Parameter routes
 router.route('/:id')
-  .get(getStudentById)
-  .put(updateStudent)
-  .delete(deleteStudent);
+  .get(protect, getStudentById)
+  .put(protect, authorize('admin'), updateStudent)
+  .delete(protect, authorize('admin'), deleteStudent);
 
 module.exports = router;

@@ -10,6 +10,7 @@ const http = require('http');
 const BASE_URL = 'http://localhost:5000';
 let passedAssertions = 0;
 let failedAssertions = 0;
+let authToken = '';
 
 function assert(condition, testName, details = '') {
   if (condition) {
@@ -23,10 +24,15 @@ function assert(condition, testName, details = '') {
 
 async function request(path, options = {}) {
   const url = new URL(path, BASE_URL);
+  const headers = {
+    ...(options.headers || {}),
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+  };
   return new Promise((resolve, reject) => {
     const req = http.request(url, {
       method: options.method || 'GET',
-      headers: options.headers || {}
+      headers
     }, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
@@ -54,6 +60,13 @@ async function runOAuthTests() {
   console.log('======================================================\n');
 
   try {
+    // Authenticate as Admin
+    const loginRes = await request('/api/auth/login', {
+      method: 'POST',
+      body: { email: 'admin@student360.edu', password: 'Admin@Student360' }
+    });
+    authToken = loginRes.data?.token;
+
     // 1. Fetch a valid student to test with
     console.log('--- Step 1: Discover Active Test Student ---');
     const studentsRes = await request('/api/students');

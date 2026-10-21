@@ -30,9 +30,11 @@ app.get('/api/health', (req, res) => {
 
 // Main Dashboard Aggregate Route
 const { getMainDashboard } = require('./controllers/reportController');
-app.get('/api/dashboard', getMainDashboard);
+const { protect } = require('./middleware/authMiddleware');
+app.get('/api/dashboard', protect, getMainDashboard);
 
 // API Routes
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/students', require('./routes/studentRoutes'));
 app.use('/api/polls', require('./routes/pollRoutes'));
 app.use('/api/activity', require('./routes/activityRoutes'));

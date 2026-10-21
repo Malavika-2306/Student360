@@ -11,21 +11,22 @@ const {
   sendInactivityAlert,
   getAlertHistory
 } = require('../controllers/activityController');
+const { protect, authorize, restrictStudentToSelf } = require('../middleware/authMiddleware');
 
-// Alerts endpoints
-router.post('/alerts/send', sendInactivityAlert);
-router.get('/alerts/history', getAlertHistory);
+// Alerts endpoints (Admin only)
+router.post('/alerts/send', protect, authorize('admin'), sendInactivityAlert);
+router.get('/alerts/history', protect, authorize('admin'), getAlertHistory);
 
 // Specific endpoints
-router.get('/today', getTodayActivity);
-router.get('/daily-roster', getDailyRoster);
-router.get('/summary', getActivitySummary);
-router.get('/platform/:platform', getPlatformActivity);
-router.get('/student/:studentId', getStudentActivity);
+router.get('/today', protect, getTodayActivity);
+router.get('/daily-roster', protect, getDailyRoster);
+router.get('/summary', protect, getActivitySummary);
+router.get('/platform/:platform', protect, getPlatformActivity);
+router.get('/student/:studentId', protect, restrictStudentToSelf('studentId'), getStudentActivity);
 
 // Root endpoints
 router.route('/')
-  .get(getAllActivity)
-  .post(addActivity);
+  .get(protect, getAllActivity)
+  .post(protect, authorize('admin'), addActivity);
 
 module.exports = router;

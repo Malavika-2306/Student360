@@ -166,9 +166,20 @@ exports.deletePoll = async (req, res, next) => {
 exports.submitPollResponse = async (req, res, next) => {
   try {
     const { pollId } = req.params;
-    const { studentId, answer } = req.body;
+    let targetStudentId = req.body.studentId;
 
-    if (!studentId) {
+    // Secure identity enforcement: never trust client studentId for student accounts
+    if (req.user && req.user.role === 'student') {
+      if (!req.user.studentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Authenticated student account is not linked to a student record.'
+        });
+      }
+      targetStudentId = req.user.studentId.toString();
+    }
+
+    if (!targetStudentId) {
       return res.status(400).json({
         success: false,
         message: 'Student ID is required to submit a poll response'
@@ -185,7 +196,7 @@ exports.submitPollResponse = async (req, res, next) => {
     }
 
     // Verify student exists
-    const student = await Student.findById(studentId);
+    const student = await Student.findById(targetStudentId);
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -193,12 +204,14 @@ exports.submitPollResponse = async (req, res, next) => {
       });
     }
 
+    const { answer } = req.body;
+
     // Upsert response (update if already exists, else create)
     const response = await PollResponse.findOneAndUpdate(
-      { pollId, studentId },
+      { pollId, studentId: targetStudentId },
       {
         pollId,
-        studentId,
+        studentId: targetStudentId,
         status: 'responded', // Automatically set status = responded
         answer: answer || 'Interested',
         respondedAt: new Date()
